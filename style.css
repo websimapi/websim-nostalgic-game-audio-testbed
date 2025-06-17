@@ -17,7 +17,7 @@ body {
     border-radius: 15px;
     box-shadow: 0 0 20px rgba(27, 231, 255, 0.3);
     border: 3px solid #1f4068;
-    max-width: 900px;
+    max-width: 1200px;
     width: 90%;
 }
 
@@ -25,6 +25,7 @@ header h1 {
     color: #e43f5a;
     text-shadow: 2px 2px #000;
     font-size: 2rem;
+    margin-bottom: 0.5rem;
 }
 
 header p {
@@ -34,9 +35,34 @@ header p {
     line-height: 1.5;
 }
 
+h2 {
+    color: #bbe1fa;
+    text-shadow: 1px 1px #000;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #1f4068;
+    padding-bottom: 0.5rem;
+    text-align: left;
+    font-size: 1.2rem;
+}
+
+hr {
+    border: 0;
+    height: 3px;
+    background-image: linear-gradient(to right, rgba(31, 64, 104, 0), rgba(31, 64, 104, 0.75), rgba(31, 64, 104, 0));
+    margin: 3rem 0;
+}
+
 #soundboard {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    justify-items: center;
+}
+
+#imageboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
     justify-items: center;
 }
@@ -49,9 +75,9 @@ header p {
     padding-left: 1rem;
     border-radius: 8px;
     font-family: 'Press Start 2P', cursive;
-    font-size: 0.7rem;
     width: 100%;
-    height: 70px;
+    min-height: 50px;
+    height: auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -88,17 +114,113 @@ header p {
 
 .sound-name {
     flex-grow: 1;
-    padding-right: 10px;
+    padding: 0.5rem 10px 0.5rem 0;
     cursor: pointer;
     text-align: left;
     outline: none;
     user-select: none; /* Prevent text selection on single click */
+    font-size: 0.7rem;
 }
+
+/* --- Image Card Styles --- */
+
+.image-card {
+    background-color: #1b262c;
+    border: 2px solid #0f4c75;
+    border-radius: 8px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.image-card:hover {
+    background-color: #3282b8;
+    border-color: #bbe1fa;
+    transform: translateY(-3px);
+}
+
+.image-card.deleted {
+    background-color: #4a2a3a;
+    border-color: #8b3a3a;
+    opacity: 0.6;
+}
+
+.image-card.deleted .image-name {
+    text-decoration: line-through;
+}
+
+.image-card.locked {
+    border-top: 5px solid #e4b43f;
+    padding-top: 0;
+}
+
+.image-card.pending-generation {
+    border-top: 5px solid #3fe4a2;
+    padding-top: 0;
+}
+
+.image-preview-container {
+    width: 100%;
+    height: 150px;
+    background-color: #0c1428;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.image-preview {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+.image-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    padding-left: 1rem;
+    min-height: 50px;
+    box-sizing: border-box;
+}
+
+.image-name {
+    flex-grow: 1;
+    padding-right: 10px;
+    outline: none;
+    user-select: none;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.7rem;
+    color: #bbe1fa;
+    text-align: left;
+}
+
+.image-card .image-name {
+    cursor: default; /* Not clickable for playback */
+}
+
+/* --- Shared Button Styles --- */
 
 .button-container {
     display: flex;
+    flex-shrink: 0;
     height: 100%;
     margin-right: -0.5rem; /* Overlap the padding */
+}
+
+.image-info .button-container {
+     margin-top: -0.5rem; 
+     margin-bottom: -0.5rem;
 }
 
 .button-container button {

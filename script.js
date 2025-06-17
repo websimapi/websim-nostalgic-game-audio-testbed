@@ -1,8 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
     const soundboard = document.getElementById('soundboard');
+    const imageboard = document.getElementById('imageboard');
     const exportBtn = document.getElementById('export-btn');
     const jsonOutput = document.getElementById('json-output');
 
+    // Initial Data
     const initialSounds = [
         // Player
         { name: 'Collect Item', file: 'collect_item.mp3' },
@@ -32,25 +35,47 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'Enemy Hit', file: 'enemy_hit.mp3' },
         { name: 'Bomb Explode', file: 'bomb_explode.mp3' },
     ];
+    
+    const initialImages = [
+        { name: 'Hero Idle', file: 'hero_idle.png' },
+        { name: 'Hero Run', file: 'hero_run.png' },
+        { name: 'Hero Attack', file: 'hero_attack.png' },
+        { name: 'Goomba Enemy', file: 'enemy_goomba.png' },
+        { name: 'Slime Enemy', file: 'enemy_slime.png' },
+        { name: 'Tree Prop', file: 'prop_tree.png' },
+        { name: 'Treasure Chest', file: 'prop_chest.png' },
+        { name: 'Grass Tile', file: 'tile_grass.png' },
+        { name: 'Dirt Path Tile', file: 'tile_dirt.png' },
+        { name: 'Heart Icon', file: 'icon_heart.png' },
+        { name: 'Coin Icon', file: 'icon_coin.png' },
+        { name: 'Sword Icon', file: 'icon_sword.png' },
+    ];
 
-    // Load lock states from localStorage
-    const savedLocks = JSON.parse(localStorage.getItem('soundLockStates')) || {};
+    // Load states from localStorage
+    const savedSoundLocks = JSON.parse(localStorage.getItem('soundLockStates')) || {};
+    const savedImageLocks = JSON.parse(localStorage.getItem('imageLockStates')) || {};
 
-    // Create a mutable state object with additional properties
+    // Create mutable state objects
     let soundState = initialSounds.map(sound => ({
         ...sound,
-        locked: savedLocks[sound.file] || false,
+        locked: savedSoundLocks[sound.file] || false,
+        deleted: false,
+        new_description: null,
+    }));
+    
+    let imageState = initialImages.map(image => ({
+        ...image,
+        locked: savedImageLocks[image.file] || false,
         deleted: false,
         new_description: null,
     }));
 
+    // --- Audio Handling ---
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const audioCache = {};
 
     async function loadSound(url) {
-        if (audioCache[url]) {
-            return audioCache[url];
-        }
+        if (audioCache[url]) return audioCache[url];
         try {
             const response = await fetch(url);
             const arrayBuffer = await response.arrayBuffer();
@@ -62,7 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Preload sounds for faster playback on first click
     initialSounds.forEach(sound => loadSound(sound.file));
 
     function playSound(url) {
@@ -78,105 +102,151 @@ document.addEventListener('DOMContentLoaded', () => {
         }).catch(error => console.error("Could not play sound", error));
     }
 
+    // --- Render Functions ---
     function renderSoundboard() {
         soundboard.innerHTML = '';
         soundState.forEach((sound, index) => {
             const card = document.createElement('div');
-            card.classList.add('sound-card');
-            card.dataset.index = index;
+            card.className = 'sound-card';
             if (sound.deleted) card.classList.add('deleted');
             if (sound.locked) card.classList.add('locked');
             if (sound.new_description) card.classList.add('pending-generation');
 
-            const nameSpan = document.createElement('span');
+            const nameSpan = createEditableNameSpan(sound, index, soundState, renderSoundboard);
             nameSpan.classList.add('sound-name');
-            nameSpan.textContent = sound.name;
             nameSpan.addEventListener('click', () => playSound(sound.file));
-            nameSpan.addEventListener('dblclick', (e) => {
-                if (sound.locked) return;
-                e.currentTarget.setAttribute('contenteditable', 'true');
-                e.currentTarget.focus();
-            });
-            nameSpan.addEventListener('blur', (e) => {
-                e.currentTarget.setAttribute('contenteditable', 'false');
-                const newName = e.currentTarget.textContent.trim();
-                if (newName && newName !== sound.name) {
-                    soundState[index].name = newName;
-                    renderSoundboard(); // Re-render to ensure consistency
-                } else {
-                    e.currentTarget.textContent = sound.name; // Revert if empty or unchanged
-                }
-            });
-            nameSpan.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    e.currentTarget.blur();
-                }
-            });
 
-            const buttonContainer = document.createElement('div');
-            buttonContainer.classList.add('button-container');
-
-            const lockBtn = document.createElement('button');
-            lockBtn.classList.add('lock-btn');
-            lockBtn.innerHTML = sound.locked ? '&#128274;' : '&#128275;'; // Lock/Unlock emoji
-            lockBtn.title = sound.locked ? 'Unlock' : 'Lock';
-            lockBtn.addEventListener('click', () => {
-                const currentSound = soundState[index];
-                currentSound.locked = !currentSound.locked;
-                
-                // Save the updated lock state to localStorage
-                const currentLocks = JSON.parse(localStorage.getItem('soundLockStates')) || {};
-                currentLocks[currentSound.file] = currentSound.locked;
-                localStorage.setItem('soundLockStates', JSON.stringify(currentLocks));
-
-                renderSoundboard();
-            });
+            const buttonContainer = createButtonContainer(sound, index, soundState, 'soundLockStates', renderSoundboard);
             
-            const generateBtn = document.createElement('button');
-            generateBtn.classList.add('generate-btn');
-            generateBtn.textContent = 'Gen';
-            generateBtn.title = 'Generate new version';
-            generateBtn.disabled = sound.locked;
-            generateBtn.addEventListener('click', () => {
-                const newDescription = prompt('Enter a new description for this sound:');
-                if (newDescription && newDescription.trim() !== '') {
-                    soundState[index].new_description = newDescription.trim();
-                    soundState[index].deleted = false; // Override deletion
-                    renderSoundboard();
-                }
-            });
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.classList.add('delete-btn');
-            deleteBtn.innerHTML = '&times;';
-            deleteBtn.title = 'Mark for deletion';
-            deleteBtn.disabled = sound.locked;
-            deleteBtn.addEventListener('click', () => {
-                soundState[index].deleted = !soundState[index].deleted;
-                if(soundState[index].deleted) {
-                    soundState[index].new_description = null; // Deletion overrides generation
-                }
-                renderSoundboard();
-            });
-
             card.appendChild(nameSpan);
-            buttonContainer.appendChild(lockBtn);
-            buttonContainer.appendChild(generateBtn);
-            buttonContainer.appendChild(deleteBtn);
             card.appendChild(buttonContainer);
             soundboard.appendChild(card);
         });
     }
 
+    function renderImageboard() {
+        imageboard.innerHTML = '';
+        imageState.forEach((image, index) => {
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            if (image.deleted) card.classList.add('deleted');
+            if (image.locked) card.classList.add('locked');
+            if (image.new_description) card.classList.add('pending-generation');
+
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'image-preview-container';
+            const img = document.createElement('img');
+            img.src = image.file;
+            img.alt = image.name;
+            img.className = 'image-preview';
+            previewContainer.appendChild(img);
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'image-info';
+
+            const nameSpan = createEditableNameSpan(image, index, imageState, renderImageboard);
+            nameSpan.classList.add('image-name');
+            
+            const buttonContainer = createButtonContainer(image, index, imageState, 'imageLockStates', renderImageboard);
+            
+            infoDiv.appendChild(nameSpan);
+            infoDiv.appendChild(buttonContainer);
+            card.appendChild(previewContainer);
+            card.appendChild(infoDiv);
+            imageboard.appendChild(card);
+        });
+    }
+
+    // --- Helper Functions for UI Elements ---
+    function createEditableNameSpan(item, index, state, renderFn) {
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = item.name;
+        nameSpan.addEventListener('dblclick', (e) => {
+            if (item.locked) return;
+            e.currentTarget.setAttribute('contenteditable', 'true');
+            e.currentTarget.focus();
+        });
+        nameSpan.addEventListener('blur', (e) => {
+            e.currentTarget.setAttribute('contenteditable', 'false');
+            const newName = e.currentTarget.textContent.trim();
+            if (newName && newName !== item.name) {
+                state[index].name = newName;
+                renderFn();
+            } else {
+                e.currentTarget.textContent = item.name;
+            }
+        });
+        nameSpan.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.currentTarget.blur();
+            }
+        });
+        return nameSpan;
+    }
+
+    function createButtonContainer(item, index, state, storageKey, renderFn) {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'button-container';
+
+        const lockBtn = document.createElement('button');
+        lockBtn.className = 'lock-btn';
+        lockBtn.innerHTML = item.locked ? '&#128274;' : '&#128275;';
+        lockBtn.title = item.locked ? 'Unlock' : 'Lock';
+        lockBtn.addEventListener('click', () => {
+            item.locked = !item.locked;
+            const currentLocks = JSON.parse(localStorage.getItem(storageKey)) || {};
+            currentLocks[item.file] = item.locked;
+            localStorage.setItem(storageKey, JSON.stringify(currentLocks));
+            renderFn();
+        });
+
+        const generateBtn = document.createElement('button');
+        generateBtn.className = 'generate-btn';
+        generateBtn.textContent = 'Gen';
+        generateBtn.title = 'Generate new version';
+        generateBtn.disabled = item.locked;
+        generateBtn.addEventListener('click', () => {
+            const newDescription = prompt(`Enter a new description for "${item.name}":`);
+            if (newDescription && newDescription.trim() !== '') {
+                state[index].new_description = newDescription.trim();
+                state[index].deleted = false;
+                renderFn();
+            }
+        });
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '&times;';
+        deleteBtn.title = 'Mark for deletion';
+        deleteBtn.disabled = item.locked;
+        deleteBtn.addEventListener('click', () => {
+            state[index].deleted = !state[index].deleted;
+            if (state[index].deleted) {
+                state[index].new_description = null;
+            }
+            renderFn();
+        });
+
+        buttonContainer.appendChild(lockBtn);
+        buttonContainer.appendChild(generateBtn);
+        buttonContainer.appendChild(deleteBtn);
+        return buttonContainer;
+    }
+    
+    // --- Export Logic ---
     function generateChangesJson() {
-        const changes = [];
+        const changes = {
+            sounds: [],
+            images: []
+        };
+        
+        // Process sound changes
         soundState.forEach((currentState, index) => {
             const initialState = initialSounds[index];
             const change = { file: currentState.file };
             let hasChanged = false;
 
-            // Precedence: Generate > Delete > Rename
             if (currentState.new_description) {
                 change.action = 'generate';
                 change.description = currentState.new_description;
@@ -192,7 +262,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (hasChanged) {
-                changes.push(change);
+                changes.sounds.push(change);
+            }
+        });
+
+        // Process image changes
+        imageState.forEach((currentState, index) => {
+            const initialState = initialImages[index];
+            const change = { file: currentState.file };
+            let hasChanged = false;
+
+            if (currentState.new_description) {
+                change.action = 'generate';
+                change.description = currentState.new_description;
+                hasChanged = true;
+            } else if (currentState.deleted) {
+                change.action = 'delete';
+                hasChanged = true;
+            }
+
+            if (currentState.name !== initialState.name) {
+                change.name = currentState.name;
+                hasChanged = true;
+            }
+
+            if (hasChanged) {
+                changes.images.push(change);
             }
         });
 
@@ -201,6 +296,8 @@ document.addEventListener('DOMContentLoaded', () => {
         jsonOutput.style.height = (jsonOutput.scrollHeight) + 'px';
     }
     
+    // --- Initial Render ---
     renderSoundboard();
+    renderImageboard();
     exportBtn.addEventListener('click', generateChangesJson);
 });
