@@ -4,6 +4,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageboard = document.getElementById('imageboard');
     const exportBtn = document.getElementById('export-btn');
     const jsonOutput = document.getElementById('json-output');
+    const paletteContainer = document.getElementById('palette-container');
+
+    // --- Theme & Palette ---
+    const colorPalette = [
+        { name: "Hero Green", color: "#5d9451" },
+        { name: "Hero Brown", color: "#8a5839" },
+        { name: "Lush Grass", color: "#76c469" },
+        { name: "Dirt Path", color: "#c28b5e" },
+        { name: "Enemy Red", color: "#d95757" },
+        { name: "Enemy Blue", color: "#5b9ee5" },
+        { name: "Accent Gold", color: "#e3a739" },
+        { name: "Accent Red", color: "#e43f5a" },
+        { name: "Outline Black", color: "#222034" },
+    ];
+
+    function renderPalette() {
+        paletteContainer.innerHTML = '';
+        colorPalette.forEach(swatch => {
+            const swatchDiv = document.createElement('div');
+            swatchDiv.className = 'color-swatch';
+            swatchDiv.style.backgroundColor = swatch.color;
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = swatch.name;
+            
+            swatchDiv.appendChild(nameSpan);
+            paletteContainer.appendChild(swatchDiv);
+        });
+    }
 
     // Initial Data
     const initialSounds = [
@@ -297,6 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // --- Initial Render ---
+    renderPalette();
     renderSoundboard();
     renderImageboard();
     exportBtn.addEventListener('click', generateChangesJson);
