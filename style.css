@@ -4,9 +4,10 @@ body {
     font-family: 'Press Start 2P', cursive;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* Align to top to prevent jumping when textarea appears */
     min-height: 100vh;
     margin: 0;
+    padding: 2rem 0; /* Add padding for scroll */
     text-align: center;
 }
 
@@ -34,38 +35,73 @@ header p {
 
 #soundboard {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
     justify-items: center;
 }
 
-.sound-btn {
+.sound-card {
     background-color: #1b262c;
     color: #bbe1fa;
     border: 2px solid #0f4c75;
-    padding: 1rem 0.5rem;
+    padding: 0.5rem;
     border-radius: 8px;
-    cursor: pointer;
     font-family: 'Press Start 2P', cursive;
     font-size: 0.7rem;
     width: 100%;
-    height: 60px;
+    height: 70px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     transition: all 0.2s ease-in-out;
+    position: relative;
+    overflow: hidden;
 }
 
-.sound-btn:hover {
+.sound-card:hover {
     background-color: #3282b8;
     color: #fff;
     border-color: #bbe1fa;
     transform: translateY(-3px);
 }
 
-.sound-btn:active {
-    transform: translateY(1px);
-    background-color: #0f4c75;
+.sound-card.deleted {
+    background-color: #4a2a3a;
+    border-color: #8b3a3a;
+    opacity: 0.6;
+}
+
+.sound-card.deleted .sound-name {
+    text-decoration: line-through;
+}
+
+.sound-name {
+    flex-grow: 1;
+    padding: 10px;
+    cursor: pointer;
+    text-align: left;
+    outline: none;
+    user-select: none; /* Prevent text selection on single click */
+}
+
+.delete-btn {
+    background-color: #e43f5a;
+    color: #fff;
+    border: none;
+    width: 30px;
+    height: 100%;
+    cursor: pointer;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    margin-right: -0.5rem; /* Overlap the padding */
+}
+
+.delete-btn:hover {
+    background-color: #c73049;
 }
 
 footer {
@@ -74,3 +110,41 @@ footer {
     color: #b8c1ec;
 }
 
+#export-container {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+#export-btn {
+    background-color: #1f4068;
+    color: #bbe1fa;
+    border: 2px solid #3282b8;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8rem;
+    transition: all 0.2s ease-in-out;
+}
+
+#export-btn:hover {
+    background-color: #3282b8;
+    border-color: #bbe1fa;
+}
+
+#json-output {
+    width: 90%;
+    max-width: 800px;
+    background-color: #0c1428;
+    color: #9fefa9;
+    border: 2px solid #1f4068;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    padding: 1rem;
+    resize: vertical;
+    min-height: 150px;
+}

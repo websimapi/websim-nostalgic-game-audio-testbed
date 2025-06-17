@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const soundboard = document.getElementById('soundboard');
+    const exportBtn = document.getElementById('export-btn');
+    const jsonOutput = document.getElementById('json-output');
 
-    const sounds = [
+    const initialSounds = [
         // Player
         { name: 'Collect Item', file: 'collect_item.mp3' },
         { name: 'Collect Key Item', file: 'collect_key_item.mp3' },
@@ -33,15 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'Bomb Explode', file: 'bomb_explode.mp3' },
     ];
 
-    sounds.forEach(sound => {
-        const btn = document.createElement('button');
-        btn.classList.add('sound-btn');
-        btn.innerText = sound.name;
-        btn.addEventListener('click', () => {
-            playSound(sound.file);
-        });
-        soundboard.appendChild(btn);
-    });
+    // Deep copy to create a mutable state object
+    let soundState = JSON.parse(JSON.stringify(initialSounds));
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const audioCache = {};
@@ -62,9 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Preload sounds for faster playback on first click
-    sounds.forEach(sound => loadSound(sound.file));
+    initialSounds.forEach(sound => loadSound(sound.file));
 
     function playSound(url) {
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
         loadSound(url).then(audioBuffer => {
             if (!audioBuffer) return;
             const source = audioContext.createBufferSource();
@@ -73,4 +71,81 @@ document.addEventListener('DOMContentLoaded', () => {
             source.start(0);
         }).catch(error => console.error("Could not play sound", error));
     }
+
+    function renderSoundboard() {
+        soundboard.innerHTML = '';
+        soundState.forEach((sound, index) => {
+            const card = document.createElement('div');
+            card.classList.add('sound-card');
+            card.dataset.index = index;
+            if (sound.deleted) {
+                card.classList.add('deleted');
+            }
+
+            const nameSpan = document.createElement('span');
+            nameSpan.classList.add('sound-name');
+            nameSpan.textContent = sound.name;
+            nameSpan.addEventListener('click', () => playSound(sound.file));
+            nameSpan.addEventListener('dblclick', (e) => {
+                e.currentTarget.setAttribute('contenteditable', 'true');
+                e.currentTarget.focus();
+            });
+            nameSpan.addEventListener('blur', (e) => {
+                e.currentTarget.setAttribute('contenteditable', 'false');
+                const newName = e.currentTarget.textContent.trim();
+                if (newName && newName !== sound.name) {
+                    soundState[index].name = newName;
+                } else {
+                    e.currentTarget.textContent = sound.name; // Revert if empty or unchanged
+                }
+            });
+            nameSpan.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                }
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.classList.add('delete-btn');
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.addEventListener('click', () => {
+                soundState[index].deleted = !soundState[index].deleted; // Toggle deletion status
+                renderSoundboard();
+            });
+
+            card.appendChild(nameSpan);
+            card.appendChild(deleteBtn);
+            soundboard.appendChild(card);
+        });
+    }
+
+    function generateChangesJson() {
+        const changes = [];
+        soundState.forEach((currentState, index) => {
+            const initialState = initialSounds[index];
+            const change = { file: currentState.file };
+            let hasChanged = false;
+
+            if (currentState.deleted) {
+                change.action = 'delete';
+                hasChanged = true;
+            }
+            if (currentState.name !== initialState.name) {
+                change.name = currentState.name;
+                hasChanged = true;
+            }
+            
+            if(hasChanged) {
+                changes.push(change);
+            }
+        });
+
+        jsonOutput.value = JSON.stringify(changes, null, 2);
+        jsonOutput.style.height = 'auto';
+        jsonOutput.style.height = (jsonOutput.scrollHeight) + 'px';
+    }
+    
+    renderSoundboard();
+    exportBtn.addEventListener('click', generateChangesJson);
 });
