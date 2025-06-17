@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'Menu Select', file: 'menu_select.mp3' },
         { name: 'Menu Cancel', file: 'menu_cancel.mp3' },
         { name: 'Dialogue Blip', file: 'dialogue_blip.mp3' },
-        { name: 'Dialogue Blip (Male)', file: 'dialogue_blip_male.mp3' },
         { name: 'Dialogue Blip (Female)', file: 'dialogue_blip_female.mp3' },
 
         // World & Interaction
@@ -31,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Combat
         { name: 'Enemy Hit', file: 'enemy_hit.mp3' },
-        { name: 'Enemy Die', file: 'enemy_die.mp3' },
         { name: 'Bomb Explode', file: 'bomb_explode.mp3' },
     ];
 
