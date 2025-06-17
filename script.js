@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'Menu Select', file: 'menu_select.mp3' },
         { name: 'Menu Cancel', file: 'menu_cancel.mp3' },
         { name: 'Dialogue Blip', file: 'dialogue_blip.mp3' },
+        { name: 'Dialogue Blip (Male)', file: 'dialogue_blip_male.mp3' },
+        { name: 'Dialogue Blip (Female)', file: 'dialogue_blip_female.mp3' },
 
         // World & Interaction
         { name: 'Open Chest', file: 'open_chest.mp3' },
@@ -70,4 +72,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }).catch(error => console.error("Could not play sound", error));
     }
 });
-
