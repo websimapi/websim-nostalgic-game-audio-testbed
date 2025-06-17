@@ -35,8 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'Bomb Explode', file: 'bomb_explode.mp3' },
     ];
 
-    // Deep copy to create a mutable state object
-    let soundState = JSON.parse(JSON.stringify(initialSounds));
+    // Create a mutable state object with additional properties
+    let soundState = initialSounds.map(sound => ({
+        ...sound,
+        locked: false,
+        deleted: false,
+        new_description: null,
+    }));
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const audioCache = {};
@@ -78,15 +83,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.classList.add('sound-card');
             card.dataset.index = index;
-            if (sound.deleted) {
-                card.classList.add('deleted');
-            }
+            if (sound.deleted) card.classList.add('deleted');
+            if (sound.locked) card.classList.add('locked');
+            if (sound.new_description) card.classList.add('pending-generation');
 
             const nameSpan = document.createElement('span');
             nameSpan.classList.add('sound-name');
             nameSpan.textContent = sound.name;
             nameSpan.addEventListener('click', () => playSound(sound.file));
             nameSpan.addEventListener('dblclick', (e) => {
+                if (sound.locked) return;
                 e.currentTarget.setAttribute('contenteditable', 'true');
                 e.currentTarget.focus();
             });
@@ -95,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newName = e.currentTarget.textContent.trim();
                 if (newName && newName !== sound.name) {
                     soundState[index].name = newName;
+                    renderSoundboard(); // Re-render to ensure consistency
                 } else {
                     e.currentTarget.textContent = sound.name; // Revert if empty or unchanged
                 }
@@ -106,16 +113,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            const buttonContainer = document.createElement('div');
+            buttonContainer.classList.add('button-container');
+
+            const lockBtn = document.createElement('button');
+            lockBtn.classList.add('lock-btn');
+            lockBtn.innerHTML = sound.locked ? '&#128274;' : '&#128275;'; // Lock/Unlock emoji
+            lockBtn.title = sound.locked ? 'Unlock' : 'Lock';
+            lockBtn.addEventListener('click', () => {
+                soundState[index].locked = !soundState[index].locked;
+                renderSoundboard();
+            });
+            
+            const generateBtn = document.createElement('button');
+            generateBtn.classList.add('generate-btn');
+            generateBtn.textContent = 'Gen';
+            generateBtn.title = 'Generate new version';
+            generateBtn.disabled = sound.locked;
+            generateBtn.addEventListener('click', () => {
+                const newDescription = prompt('Enter a new description for this sound:');
+                if (newDescription && newDescription.trim() !== '') {
+                    soundState[index].new_description = newDescription.trim();
+                    soundState[index].deleted = false; // Override deletion
+                    renderSoundboard();
+                }
+            });
+
             const deleteBtn = document.createElement('button');
             deleteBtn.classList.add('delete-btn');
             deleteBtn.innerHTML = '&times;';
+            deleteBtn.title = 'Mark for deletion';
+            deleteBtn.disabled = sound.locked;
             deleteBtn.addEventListener('click', () => {
-                soundState[index].deleted = !soundState[index].deleted; // Toggle deletion status
+                soundState[index].deleted = !soundState[index].deleted;
+                if(soundState[index].deleted) {
+                    soundState[index].new_description = null; // Deletion overrides generation
+                }
                 renderSoundboard();
             });
 
             card.appendChild(nameSpan);
-            card.appendChild(deleteBtn);
+            buttonContainer.appendChild(lockBtn);
+            buttonContainer.appendChild(generateBtn);
+            buttonContainer.appendChild(deleteBtn);
+            card.appendChild(buttonContainer);
             soundboard.appendChild(card);
         });
     }
@@ -127,16 +168,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const change = { file: currentState.file };
             let hasChanged = false;
 
-            if (currentState.deleted) {
+            // Precedence: Generate > Delete > Rename
+            if (currentState.new_description) {
+                change.action = 'generate';
+                change.description = currentState.new_description;
+                hasChanged = true;
+            } else if (currentState.deleted) {
                 change.action = 'delete';
                 hasChanged = true;
             }
+
             if (currentState.name !== initialState.name) {
                 change.name = currentState.name;
                 hasChanged = true;
             }
-            
-            if(hasChanged) {
+
+            if (hasChanged) {
                 changes.push(change);
             }
         });

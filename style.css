@@ -31,6 +31,7 @@ header p {
     color: #b8c1ec;
     font-size: 0.8rem;
     margin-bottom: 2rem;
+    line-height: 1.5;
 }
 
 #soundboard {
@@ -45,6 +46,7 @@ header p {
     color: #bbe1fa;
     border: 2px solid #0f4c75;
     padding: 0.5rem;
+    padding-left: 1rem;
     border-radius: 8px;
     font-family: 'Press Start 2P', cursive;
     font-size: 0.7rem;
@@ -56,6 +58,7 @@ header p {
     transition: all 0.2s ease-in-out;
     position: relative;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .sound-card:hover {
@@ -75,32 +78,70 @@ header p {
     text-decoration: line-through;
 }
 
+.sound-card.locked {
+    border-left: 5px solid #e4b43f;
+}
+
+.sound-card.pending-generation {
+    border-left: 5px solid #3fe4a2;
+}
+
 .sound-name {
     flex-grow: 1;
-    padding: 10px;
+    padding-right: 10px;
     cursor: pointer;
     text-align: left;
     outline: none;
     user-select: none; /* Prevent text selection on single click */
 }
 
-.delete-btn {
-    background-color: #e43f5a;
+.button-container {
+    display: flex;
+    height: 100%;
+    margin-right: -0.5rem; /* Overlap the padding */
+}
+
+.button-container button {
     color: #fff;
     border: none;
-    width: 30px;
     height: 100%;
     cursor: pointer;
     font-family: 'Press Start 2P', cursive;
-    font-size: 1rem;
+    font-size: 0.7rem;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s;
-    margin-right: -0.5rem; /* Overlap the padding */
+    padding: 0 10px;
 }
 
-.delete-btn:hover {
+.button-container button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #555 !important;
+}
+
+.lock-btn {
+    background-color: #e4b43f;
+    font-size: 1rem;
+}
+.lock-btn:hover:not(:disabled) {
+    background-color: #c89e35;
+}
+
+.generate-btn {
+    background-color: #3fe4a2;
+}
+.generate-btn:hover:not(:disabled) {
+    background-color: #35c88e;
+}
+
+.delete-btn {
+    background-color: #e43f5a;
+    font-size: 1rem;
+}
+
+.delete-btn:hover:not(:disabled) {
     background-color: #c73049;
 }
 
