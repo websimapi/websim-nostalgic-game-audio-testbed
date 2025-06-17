@@ -35,10 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'Bomb Explode', file: 'bomb_explode.mp3' },
     ];
 
+    // Load lock states from localStorage
+    const savedLocks = JSON.parse(localStorage.getItem('soundLockStates')) || {};
+
     // Create a mutable state object with additional properties
     let soundState = initialSounds.map(sound => ({
         ...sound,
-        locked: false,
+        locked: savedLocks[sound.file] || false,
         deleted: false,
         new_description: null,
     }));
@@ -121,7 +124,14 @@ document.addEventListener('DOMContentLoaded', () => {
             lockBtn.innerHTML = sound.locked ? '&#128274;' : '&#128275;'; // Lock/Unlock emoji
             lockBtn.title = sound.locked ? 'Unlock' : 'Lock';
             lockBtn.addEventListener('click', () => {
-                soundState[index].locked = !soundState[index].locked;
+                const currentSound = soundState[index];
+                currentSound.locked = !currentSound.locked;
+                
+                // Save the updated lock state to localStorage
+                const currentLocks = JSON.parse(localStorage.getItem('soundLockStates')) || {};
+                currentLocks[currentSound.file] = currentSound.locked;
+                localStorage.setItem('soundLockStates', JSON.stringify(currentLocks));
+
                 renderSoundboard();
             });
             
