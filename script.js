@@ -67,6 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const initialImages = [
         { name: 'Hero (T-Pose)', file: 'hero_tpose.png' },
+        { name: 'Hero (Walk)', file: 'hero_walk.png' },
+        { name: 'Hero (Run)', file: 'hero_run.png' },
+        { name: 'Hero (Jump)', file: 'hero_jump.png' },
+        { name: 'Hero (Attack)', file: 'hero_attack.png' },
         { name: 'Goomba Enemy', file: 'enemy_goomba.png' },
         { name: 'Slime Enemy', file: 'enemy_slime.png' },
         { name: 'Tree Prop', file: 'prop_tree.png' },
